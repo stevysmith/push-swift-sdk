@@ -37,8 +37,40 @@ struct ContentView: View {
 
 func connect() async {
   do {
-    let user = try await PushUser.get(
-      account: "0xD26A7BF7fa0f8F1f3f73B056c9A67565A6aFE63c", env: .STAGING)!
+      let user: PushUser?
+      
+      if let _user = try await PushUser.get(
+        account: "0xD26A7BF7fa0f8F1f3f73B056c9A67565A6aFE63c", env: .STAGING) {
+          user = _user
+          var name = _user.profile.name ?? "User found: No Name"
+          print("got user")
+      } else {
+          let newUser = try await PushUser.createUserEmpty(userAddress: "0xD26A7BF7fa0f8F1f3f73B056c9A67565A6aFE63c", env: .STAGING)
+              var name = newUser.profile.name ?? "User found: No Name"
+          user = newUser
+          print("created user")
+      }
+      
+      let signer = try SignerPrivateKey(
+          privateKey: ""
+      )
+      
+      let pgpPrivateKey:String = try await PushUser.DecryptPGPKey(
+       encryptedPrivateKey: user!.encryptedPrivateKey,
+       signer: signer
+     )
+      
+      let chats:[PushChat.Feeds] = try await PushChat.getChats(
+        options: PushChat.GetChatsOptions(
+          account: "0xD26A7BF7fa0f8F1f3f73B056c9A67565A6aFE63c",
+          pgpPrivateKey: pgpPrivateKey,
+          toDecrypt: true,
+          page: 1,
+          limit: 5,
+          env: ENV.STAGING
+        ))
+      
+      
     print(user)
   } catch {
     print(error)
