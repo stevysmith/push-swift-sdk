@@ -52,13 +52,21 @@ func connect() async {
       }
       
       let signer = try SignerPrivateKey(
-          privateKey: ""
+          privateKey: "0xd5071223dcbf1cb824090bd98e0ddc807be00f1874fdd74bbd9225773a824123"
       )
+      
+      let typedSigner = try TypedSignerPrivateKey(privateKey: "0xd5071223dcbf1cb824090bd98e0ddc807be00f1874fdd74bbd9225773a824123")
       
       let pgpPrivateKey:String = try await PushUser.DecryptPGPKey(
        encryptedPrivateKey: user!.encryptedPrivateKey,
        signer: signer
      )
+      
+      let result:Bool = try await PushChannel.subscribe(
+          option: PushChannel.SubscribeOption(
+              signer: typedSigner,
+              channelAddress: "0xD26A7BF7fa0f8F1f3f73B056c9A67565A6aFE63c",
+              env: .STAGING))
       
       let chats:[PushChat.Feeds] = try await PushChat.getChats(
         options: PushChat.GetChatsOptions(
@@ -69,8 +77,7 @@ func connect() async {
           limit: 5,
           env: ENV.STAGING
         ))
-      
-      
+    
     print(user)
   } catch {
     print(error)
